@@ -70,6 +70,11 @@
    cd /home/ubuntu/output && ./bootstrap_boe.sh
    ```
 
+## idea启动 
+
+![run-idea.png](image/run-idea.png)
+
+
 ## 相关链接
 
 - Hertz官方文档：https://www.cloudwego.io/zh/docs/hertz/

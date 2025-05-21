@@ -4,11 +4,9 @@ import (
 	"Hertz-Scaffold/biz/bo"
 	"Hertz-Scaffold/biz/repository"
 	"Hertz-Scaffold/biz/utils/common"
-	"Hertz-Scaffold/biz/validate"
 	"Hertz-Scaffold/conf"
 	"database/sql"
 	"fmt"
-	"github.com/cloudwego/hertz/pkg/app/server/binding"
 	"github.com/sirupsen/logrus"
 	"io"
 	"sync"
@@ -130,10 +128,10 @@ func initGlobalLogger() {
 }
 
 func initValidator() {
-	binding.SetLooseZeroMode(true)
-	for _, value := range validate.GetFuncArray() {
-		binding.MustRegValidateFunc(value.Name, value.Func)
-	}
+	//binding.SetLooseZeroMode(true)
+	//for _, value := range validate.GetFuncArray() {
+	//	binding.MustRegValidateFunc(value.Name, value.Func)
+	//}
 	fmt.Println("########  init validate over")
 }
 
