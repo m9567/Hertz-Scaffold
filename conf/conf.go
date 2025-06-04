@@ -32,6 +32,11 @@ type YamlConfig struct {
 	MysqlProduct MysqlBase
 	RedisDevelop RedisBase
 	RedisProduct RedisBase
+	GameConfig   GameConfig
+}
+
+type GameConfig struct {
+	DefaultCurrency string
 }
 
 type HertzBase struct {

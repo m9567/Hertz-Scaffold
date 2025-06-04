@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RUN_NAME="xxx_bin"
+RUN_NAME="jdb"
 export PATH=$PATH:/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin
 current=$(cd $(dirname $0) && pwd )
 cd $current && go mod tidy && mkdir -p output/bin output/conf output/log

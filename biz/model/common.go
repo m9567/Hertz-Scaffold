@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type CommonBase struct {
-	CreatedAt int      `gorm:"column:created_at"`
-	UpdatedAt int      `gorm:"column:updated_at"`
-	IsDelete  IsDelete `gorm:"column:is_delete"`
+	CreatedAt *time.Time `gorm:"column:created_at;type:datetime;comment:创建时间" json:"created_at"`
+	UpdatedAt *time.Time `gorm:"column:updated_at;type:datetime;comment:更新时间" json:"updated_at"`
+	IsDelete  IsDelete   `gorm:"column:is_delete"`
 }
 
 type IsDelete int
