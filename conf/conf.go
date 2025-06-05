@@ -26,17 +26,19 @@ type BaseInfo struct {
 }
 
 type YamlConfig struct {
-	Develop      HertzBase
-	Product      HertzBase
-	MysqlDevelop MysqlBase
-	MysqlProduct MysqlBase
-	RedisDevelop RedisBase
-	RedisProduct RedisBase
-	GameConfig   GameConfig
+	Develop           HertzBase
+	Product           HertzBase
+	MysqlDevelop      MysqlBase
+	MysqlProduct      MysqlBase
+	RedisDevelop      RedisBase
+	RedisProduct      RedisBase
+	GameConfigDevelop GameConfig
+	GameConfigProduct GameConfig
 }
 
 type GameConfig struct {
 	DefaultCurrency string
+	JdbUsdUrl       string
 }
 
 type HertzBase struct {
@@ -163,5 +165,13 @@ func (a *AppConfig) GetDomainInfo() string {
 		return a.YamlConfig.Develop.Domain
 	} else {
 		return a.YamlConfig.Product.Domain
+	}
+}
+
+func (a *AppConfig) GetGameInfo() GameConfig {
+	if a.FlagConfig.Type == "dev" {
+		return a.YamlConfig.GameConfigDevelop
+	} else {
+		return a.YamlConfig.GameConfigProduct
 	}
 }

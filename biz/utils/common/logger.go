@@ -6,7 +6,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -33,8 +32,8 @@ func GetCtxLogger(c *app.RequestContext) Logger {
 	})
 	logger.SetLevel(GetInfoLevel()) // 设置日志级别
 	logger.SetReportCaller(false)   // 设置在输出日志中添加文件名和方法信息 默认关闭
-	writer, _ := DivisionWriter(CtxLoggerName)
-	logger.SetOutput(io.MultiWriter(writer))
+	//writer, _ := DivisionWriter(CtxLoggerName)
+	//logger.SetOutput(io.MultiWriter(writer))
 	logger.SetOutput(os.Stdout)
 	return Logger{TempLogger: logger, Ctx: c}
 }

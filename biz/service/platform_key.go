@@ -32,7 +32,7 @@ func GetPlatformKeyService() PlatformKeyService {
 func (s *PlatformKeyServiceProxy) Find(c *app.RequestContext, currency string, code string) string {
 	json, _ := dal.GetPlatformKeyDal().Find(c, currency, code)
 	if json == "" {
-		defaultCurrency := conf.AppConf.GameConfig.DefaultCurrency
+		defaultCurrency := conf.AppConf.GetGameInfo().DefaultCurrency
 		keyJson, _ := dal.GetPlatformKeyDal().Find(c, defaultCurrency, code)
 		return keyJson
 	} else {

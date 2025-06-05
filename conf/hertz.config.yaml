@@ -34,5 +34,10 @@ RedisProduct:
   MaxIdle: 100
   DownGrade: false
 
-GameConfig:
+GameConfigDevelop:
   DefaultCurrency: USD
+  JdbUsdUrl: https://api.jygrq.com/apiRequest.do
+
+GameConfigProduct:
+  DefaultCurrency: USD
+  JdbUsdUrl: https://api.jygrq.com/apiRequest.do
