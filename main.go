@@ -29,15 +29,15 @@ func main() {
 		middleware.RequestDoTracerId(),     // 全局链路中间件
 		middleware.RecoveryMiddleware(),    // 最后捕获panic错误
 	)
-	//go cron_job.InitCronJob() // 如果需要定时任务 则开启定时任务
-	go engine.Spin() // 开启Http服务
-	//handler.JdbProxy()
-	func() {
+	go func() {
 		err := http.ListenAndServe(":"+strconv.Itoa(conf.AppConf.GetBaseInfo().ServicePort+1), nil)
 		if err != nil {
 
 		}
 	}()
+	//go cron_job.InitCronJob() // 如果需要定时任务 则开启定时任务
+	engine.Spin() // 开启Http服务
+
 	defer func(SqlDbPool *sql.DB) {
 		err := SqlDbPool.Close()
 		if err != nil {

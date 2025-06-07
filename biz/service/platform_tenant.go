@@ -8,7 +8,7 @@ import (
 )
 
 type PlatformTenantService interface {
-	List(c *app.RequestContext) []model.PlatformTenant
+	List(c *app.RequestContext) []*model.PlatformTenant
 }
 
 type PlatformTenantServiceProxy struct {
@@ -29,6 +29,6 @@ func GetPlatformTenantService() PlatformTenantService {
 	return platformTenantService
 }
 
-func (s *PlatformTenantServiceProxy) List(c *app.RequestContext) []model.PlatformTenant {
+func (s *PlatformTenantServiceProxy) List(c *app.RequestContext) []*model.PlatformTenant {
 	return dal.GetPlatformTenantDal().List(c)
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type PlatformKeyService interface {
-	FindOne(c *app.RequestContext, currency string, code string) *model.PlatformKey
+	FindOneOrDefault(c *app.RequestContext, currency string, code string) *model.PlatformKey
 }
 
 type PlatformKeyServiceProxy struct {
@@ -30,7 +30,7 @@ func GetPlatformKeyService() PlatformKeyService {
 	return platformKeyService
 }
 
-func (s *PlatformKeyServiceProxy) FindOne(c *app.RequestContext, currency string, code string) *model.PlatformKey {
+func (s *PlatformKeyServiceProxy) FindOneOrDefault(c *app.RequestContext, currency string, code string) *model.PlatformKey {
 	platformKey, _ := dal.GetPlatformKeyDal().FindOne(c, currency, code)
 	if platformKey != nil {
 		return platformKey
