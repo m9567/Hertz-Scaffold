@@ -35,9 +35,7 @@ RedisProduct:
   DownGrade: false
 
 GameConfigDevelop:
-  DefaultCurrency: USD
-  JdbUsdUrl: https://api.jygrq.com/apiRequest.do
+  DefaultCurrency: usd
 
 GameConfigProduct:
-  DefaultCurrency: USD
-  JdbUsdUrl: https://api.jygrq.com/apiRequest.do
+  DefaultCurrency: usd

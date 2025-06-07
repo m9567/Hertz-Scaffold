@@ -2,13 +2,14 @@ package service
 
 import (
 	"Hertz-Scaffold/biz/dal"
+	"Hertz-Scaffold/biz/model"
 	"Hertz-Scaffold/conf"
 	"github.com/cloudwego/hertz/pkg/app"
 	"sync"
 )
 
 type PlatformKeyService interface {
-	Find(c *app.RequestContext, currency string, code string) string
+	FindOne(c *app.RequestContext, currency string, code string) *model.PlatformKey
 }
 
 type PlatformKeyServiceProxy struct {
@@ -29,13 +30,12 @@ func GetPlatformKeyService() PlatformKeyService {
 	return platformKeyService
 }
 
-func (s *PlatformKeyServiceProxy) Find(c *app.RequestContext, currency string, code string) string {
-	json, _ := dal.GetPlatformKeyDal().Find(c, currency, code)
-	if json == "" {
-		defaultCurrency := conf.AppConf.GetGameInfo().DefaultCurrency
-		keyJson, _ := dal.GetPlatformKeyDal().Find(c, defaultCurrency, code)
-		return keyJson
-	} else {
-		return json
+func (s *PlatformKeyServiceProxy) FindOne(c *app.RequestContext, currency string, code string) *model.PlatformKey {
+	platformKey, _ := dal.GetPlatformKeyDal().FindOne(c, currency, code)
+	if platformKey != nil {
+		return platformKey
 	}
+	defaultCurrency := conf.AppConf.GetGameInfo().DefaultCurrency
+	platformKey, _ = dal.GetPlatformKeyDal().FindOne(c, defaultCurrency, code)
+	return platformKey
 }

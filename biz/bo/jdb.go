@@ -6,7 +6,11 @@ type JdbKey struct {
 	DC  string `json:"dc"`
 }
 
-type JdbRequest struct {
+type JdbCallbackRequest struct {
 	CallbackPathRequest
 	X string `json:"x"`
+}
+
+type JdbRequestUrl struct {
+	ApiRequest string `json:"apiRequest"`
 }

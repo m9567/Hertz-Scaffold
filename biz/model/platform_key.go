@@ -6,6 +6,7 @@ type PlatformKey struct {
 	Code     string `gorm:"type:varchar(255);column:code;not null"`     // 场馆
 	Currency string `gorm:"type:varchar(255);column:currency;not null"` //币种
 	KeyJson  string `gorm:"type:text;column:key_json;not null"`         //key json
+	UrlJson  string `gorm:"type:text;column:url_json;not null"`         //url json
 
 }
 

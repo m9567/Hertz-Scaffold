@@ -23,19 +23,19 @@ func GetPlatformKeyDal() *PlatformKeyDal {
 	return platformKeyDal
 }
 
-func (ins *PlatformKeyDal) Find(c *app.RequestContext, currency string, code string) (keyJson string, err error) {
+func (ins *PlatformKeyDal) FindOne(c *app.RequestContext, currency string, code string) (dto *model.PlatformKey, err error) {
 	logger := common.GetCtxLogger(c)
 	db, err := ins.GetTransaction(c)
 	if err != nil {
 		logger.Error(err.Error())
-		return "", err
+		return nil, err
 	}
 
-	tmp := &model.PlatformKey{}
-	res := db.Table(model.PlatformKey{}.TableName()).Where("currency = ? AND code = ?", currency, code).First(&tmp)
+	temp := &model.PlatformKey{}
+	res := db.Table(model.PlatformKey{}.TableName()).Where("currency = ? AND code = ?", currency, code).First(&temp)
 	if res.Error != nil {
 		logger.Error(res.Error.Error())
-		return "", res.Error
+		return nil, res.Error
 	}
-	return tmp.KeyJson, nil
+	return temp, nil
 }

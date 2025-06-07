@@ -15,17 +15,21 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"strings"
+	"sync"
+	"time"
 )
 
 func init() {
-	common.Register(constant.DefaultAPIModule, constant.MethodPost, ":currency/jdb/action", JdbAction)
+	common.Register(constant.DefaultAPIModule, constant.MethodPost, "jdb/:currency/action", JdbAction)
+	jdbProxy()
 }
 
 func JdbAction(ctx context.Context, c *app.RequestContext) {
 	logger := common.GetCtxLogger(c)
 	//
-	request := bo.JdbRequest{}
+	request := bo.JdbCallbackRequest{}
 	err := c.Bind(&request)
 	if err != nil {
 		return
@@ -34,7 +38,7 @@ func JdbAction(ctx context.Context, c *app.RequestContext) {
 
 	logger.Info("JdbAction1 %v x %v", request, x)
 
-	keyJson := service.GetPlatformKeyService().Find(c, request.Currency, constant.JDB)
+	keyJson := service.GetPlatformKeyService().FindOne(c, request.Currency, constant.JDB).KeyJson
 	body, _ := jdbAesDecrypt(keyJson, x)
 	logger.Info("JdbAction %v", body)
 
@@ -44,21 +48,48 @@ func JdbAction(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	uid := m["uid"].(string)
-	// native
-	if strings.HasPrefix(uid, "9wyl") {
-		url := "https://testapi.abcvip.website/callback/game/call/jdb/action?x=GxhqU_KBGxPLYEWVYjk4RPrjxj0JI3Y7LFmm0Pik2Nh6Gs-F7lB5eF66CfOw8b06JOWe5f_k_3o-qxpXFAt5SPLXyX5uUSe_zmw8iKD3y9W84OjIAjJ61CfpFsImyF9rIifmIrnAwnN9la6--95dWVL0RhQ6_4GnadhCFI5uQnJfEUWkQYswItA3azn5LKNnvH3Ze-MpBj4EqXTIOgo1wQ"
-		method := "POST"
-		client := &http.Client{}
-		req, _ := http.NewRequest(method, url, nil)
-		res, _ := client.Do(req)
 
-		defer res.Body.Close()
-		body, _ := io.ReadAll(res.Body)
+	tenantList := service.GetPlatformTenantService().List(c)
 
-		c.SetStatusCode(http.StatusOK)
-		logger.Info("JdbAction response %v", string(body))
-		_, _ = c.Write(body)
+	for _, tenant := range tenantList {
+		if strings.HasPrefix(uid, tenant.Prefix) {
+			url := tenant.Host + "/callback/game/call/jdb/action?x=" + x
+			method := "POST"
+			client := &http.Client{}
+			req, _ := http.NewRequest(method, url, nil)
+			req.Header.Add("tenantCode", tenant.TenantCode)
+			res, _ := client.Do(req)
+
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+
+				}
+			}(res.Body)
+			body, _ := io.ReadAll(res.Body)
+
+			c.SetStatusCode(http.StatusOK)
+			logger.Info("JdbAction response %v", string(body))
+			_, _ = c.Write(body)
+			return
+		}
 	}
+
+	// native
+	//if strings.HasPrefix(uid, "9wyl") {
+	//	url := "https://testapi.abcvip.website/callback/game/call/jdb/action?x=GxhqU_KBGxPLYEWVYjk4RPrjxj0JI3Y7LFmm0Pik2Nh6Gs-F7lB5eF66CfOw8b06JOWe5f_k_3o-qxpXFAt5SPLXyX5uUSe_zmw8iKD3y9W84OjIAjJ61CfpFsImyF9rIifmIrnAwnN9la6--95dWVL0RhQ6_4GnadhCFI5uQnJfEUWkQYswItA3azn5LKNnvH3Ze-MpBj4EqXTIOgo1wQ"
+	//	method := "POST"
+	//	client := &http.Client{}
+	//	req, _ := http.NewRequest(method, url, nil)
+	//	res, _ := client.Do(req)
+	//
+	//	defer res.Body.Close()
+	//	body, _ := io.ReadAll(res.Body)
+	//
+	//	c.SetStatusCode(http.StatusOK)
+	//	logger.Info("JdbAction response %v", string(body))
+	//	_, _ = c.Write(body)
+	//}
 	//body
 	//if strings.HasPrefix(uid, "9wyl") {
 	//	url := "https://testapi.abcvip.website/callback/game/call/jdb/action?x=GxhqU_KBGxPLYEWVYjk4RPrjxj0JI3Y7LFmm0Pik2Nh6Gs-F7lB5eF66CfOw8b06JOWe5f_k_3o-qxpXFAt5SPLXyX5uUSe_zmw8iKD3y9W84OjIAjJ61CfpFsImyF9rIifmIrnAwnN9la6--95dWVL0RhQ6_4GnadhCFI5uQnJfEUWkQYswItA3azn5LKNnvH3Ze-MpBj4EqXTIOgo1wQ"
@@ -113,4 +144,33 @@ func jdbAesDecrypt(keyJson string, encryptedText string) (string, error) {
 	// Remove zero padding
 	plainText = bytes.TrimRight(plainText, string([]byte{0}))
 	return string(plainText), nil
+}
+
+var (
+	JdbProxyMap = make(map[string]*httputil.ReverseProxy)
+	JdbMutex    = sync.Mutex{}
+)
+
+func jdbProxy() {
+	http.HandleFunc("/jdb/usd/apiRequest.do", func(w http.ResponseWriter, r *http.Request) {
+		urlJson := service.GetPlatformKeyService().FindOne(nil, "usd", constant.JDB).UrlJson
+		var jdbRequestUrl bo.JdbRequestUrl
+		_ = json.Unmarshal([]byte(urlJson), &jdbRequestUrl)
+		apiRequest := jdbRequestUrl.ApiRequest
+		reverseProxy := JdbProxyMap[apiRequest]
+		if reverseProxy != nil {
+			reverseProxy.ServeHTTP(w, r)
+			return
+		}
+		for i := 0; i < 10; i++ {
+			lock := JdbMutex.TryLock()
+			if lock {
+				defer JdbMutex.Unlock()
+				reverseProxy = common.NewProxy(apiRequest)
+				JdbProxyMap[apiRequest] = reverseProxy
+				reverseProxy.ServeHTTP(w, r)
+			}
+			time.Sleep(time.Millisecond * 100)
+		}
+	})
 }

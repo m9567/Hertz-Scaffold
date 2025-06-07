@@ -38,7 +38,6 @@ type YamlConfig struct {
 
 type GameConfig struct {
 	DefaultCurrency string
-	JdbUsdUrl       string
 }
 
 type HertzBase struct {
