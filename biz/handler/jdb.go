@@ -38,7 +38,7 @@ func JdbAction(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	username, done := getUsername(platformKey, x)
+	username, done := getJdbUsername(platformKey, x)
 	if done {
 		return
 	}
@@ -86,7 +86,7 @@ func JdbAction(ctx context.Context, c *app.RequestContext) {
 
 }
 
-func getUsername(platformKey *model.PlatformKey, param interface{}) (string, bool) {
+func getJdbUsername(platformKey *model.PlatformKey, param interface{}) (string, bool) {
 	body, _ := jdbAesDecrypt(platformKey.KeyJson, param.(string))
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(body), &m)

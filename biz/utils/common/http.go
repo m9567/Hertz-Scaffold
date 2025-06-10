@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+var (
+	FormUrlencoded = "application/x-www-form-urlencoded"
+)
+
 func ForwardJson(tenant *model.PlatformTenant, url string, payload string) (int, map[string]interface{}) {
 	url = tenant.Host + url
 	httpClientCfg := netutil.HttpClientConfig{
@@ -52,6 +56,7 @@ func ForwardFormUrl(tenant *model.PlatformTenant, url string, payload map[string
 		}
 	}
 	request.Headers.Add("tenantCode", tenant.TenantCode)
+	request.Headers.Add("Content-Type", FormUrlencoded)
 	httpClient := netutil.NewHttpClientWithConfig(&httpClientCfg)
 
 	res, _ := httpClient.SendRequest(request)
