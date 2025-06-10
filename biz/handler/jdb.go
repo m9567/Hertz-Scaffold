@@ -14,20 +14,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
+	"log"
 	"net/http"
 	"strings"
 )
 
 var (
-	apiRequest = "apiRequest.do"
+	jdbApiRequest = "apiRequest.do"
 )
 
 func init() {
 	//todo 改造前/callback/game/call/jdb/action
 	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/game/call/jdb/action", JdbAction)
 	//todo /callback/usd/game/call/jdb/action
-	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/:currency/game/call/jdb/action", JdbAction)
-	proxy()
+	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/game/:currency/call/jdb/action", JdbAction)
+	jdbProxy()
 }
 
 func JdbAction(ctx context.Context, c *app.RequestContext) {
@@ -126,16 +127,18 @@ func jdbAesDecrypt(keyJson string, encryptedText string) (string, error) {
 	return string(plainText), nil
 }
 
-func proxy() {
-	proxyOneCurrency(constant.USD, apiRequest)
+func jdbProxy() {
+	jdbProxyOneCurrency(constant.USD, jdbApiRequest)
 }
 
-func proxyOneCurrency(currency string, path string) {
-	http.HandleFunc(constant.InnerURLPrefix+"/jdb/"+currency+"/"+path, func(w http.ResponseWriter, r *http.Request) {
+func jdbProxyOneCurrency(currency string, path string) {
+	pattern := constant.InnerURLPrefix + "/jdb/" + currency + "/" + path
+	log.Println(pattern)
+	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		platformKey := service.GetPlatformKeyService().GetPlatformKey(nil, currency, constant.JDB)
 		var urlMap = make(map[string]string)
 		_ = json.Unmarshal([]byte(platformKey.UrlJson), &urlMap)
-		url := urlMap[path]
-		common.ProxyUrl(w, r, url)
+		//url := urlMap[path]
+		//common.ProxyUrl(w, r, url)
 	})
 }

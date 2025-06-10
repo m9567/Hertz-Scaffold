@@ -38,8 +38,7 @@ func ForwardJson(tenant *model.PlatformTenant, url string, payload string) (int,
 	return res.StatusCode, tempMap
 }
 
-func ForwardFormUrl(tenant *model.PlatformTenant, url string, payload map[string]string) (int, map[string]interface{}) {
-	url = tenant.Host + url
+func ForwardFormUrl(tenantCode string, url string, payload map[string]string) (int, map[string]interface{}) {
 	httpClientCfg := netutil.HttpClientConfig{
 		SSLEnabled:       true,
 		HandshakeTimeout: 10 * time.Second,
@@ -55,7 +54,9 @@ func ForwardFormUrl(tenant *model.PlatformTenant, url string, payload map[string
 			request.FormData.Add(k, payload[k])
 		}
 	}
-	request.Headers.Add("tenantCode", tenant.TenantCode)
+	if tenantCode != "" {
+		request.Headers.Add("tenantCode", tenantCode)
+	}
 	request.Headers.Add("Content-Type", FormUrlencoded)
 	httpClient := netutil.NewHttpClientWithConfig(&httpClientCfg)
 
