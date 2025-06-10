@@ -14,51 +14,50 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
-	"io"
 	"net/http"
-	"net/http/httputil"
 	"strings"
-	"sync"
-	"time"
 )
 
 var (
-	JdbProxyMap   = make(map[string]*httputil.ReverseProxy)
-	JdbMutex      = sync.Mutex{}
-	JdbTenantMap  = make(map[string]*model.PlatformTenant)
-	JdbRequestMap = make(map[string]*model.PlatformKey)
-	USD           = "usd"
+	apiRequest = "apiRequest.do"
 )
 
 func init() {
-	common.Register(constant.DefaultAPIModule, constant.MethodPost, "jdb/:currency/action", JdbAction)
+	//todo 改造前/callback/game/call/jdb/action
+	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/game/call/jdb/action", JdbAction)
+	//todo /callback/usd/game/call/jdb/action
+	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/:currency/game/call/jdb/action", JdbAction)
 	proxy()
 }
 
 func JdbAction(ctx context.Context, c *app.RequestContext) {
-	logger := common.GetCtxLogger(c)
-	//
-	request := bo.JdbCallbackRequest{}
-	err := c.Bind(&request)
-	if err != nil {
-		return
-	}
+	currency := c.Param("currency")
 	x := c.Query("x")
-
-	platformKey := getPlatformKey(c, request.Currency)
+	platformKey := service.GetPlatformKeyService().GetPlatformKey(c, currency, constant.JDB)
 	if platformKey == nil {
 		return
 	}
-	uid, done := getUsername(platformKey, x)
+
+	username, done := getUsername(platformKey, x)
 	if done {
 		return
 	}
-	tenant := getPlatformTenant(uid, c)
+	tenant := service.GetPlatformTenantService().GetPlatformTenant(c, constant.JDB, username)
 	if tenant == nil {
 		return
 	}
 
-	forward(tenant, x, c, logger)
+	b, f, _ := strings.Cut(c.FullPath(), "/:currency")
+	url := b + f + "?"
+	c.QueryArgs().VisitAll(func(k, v []byte) {
+		if strings.HasSuffix(url, "?") {
+			url = url + string(k) + "=" + string(v)
+		} else {
+			url = url + "&" + string(k) + "=" + string(v)
+		}
+	})
+	statusCode, tempMap := common.ForwardJson(tenant, url, "")
+	c.JSON(statusCode, tempMap)
 
 	//body
 	//if strings.HasPrefix(uid, "9wyl") {
@@ -87,43 +86,8 @@ func JdbAction(ctx context.Context, c *app.RequestContext) {
 
 }
 
-func forward(tenant *model.PlatformTenant, x string, c *app.RequestContext, logger common.Logger) {
-	url := tenant.Host + "/callback/game/call/jdb/action?x=" + x
-	logger.Info("JdbAction url %v", url)
-	method := "POST"
-	client := &http.Client{}
-	req, _ := http.NewRequest(method, url, nil)
-	req.Header.Add("tenantCode", tenant.TenantCode)
-	res, _ := client.Do(req)
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-
-		}
-	}(res.Body)
-	body, _ := io.ReadAll(res.Body)
-	c.SetStatusCode(http.StatusOK)
-	logger.Info("JdbAction response %v", string(body))
-	var tempMap = make(map[string]interface{})
-	err := json.Unmarshal(body, &tempMap)
-	if err != nil {
-		return
-	}
-	c.JSON(res.StatusCode, tempMap)
-}
-
-func getPlatformKey(c *app.RequestContext, currency string) *model.PlatformKey {
-	platformKey := JdbRequestMap[currency]
-	if platformKey == nil {
-		platformKey = service.GetPlatformKeyService().FindOneOrDefault(c, currency, constant.JDB)
-		JdbRequestMap[currency] = platformKey
-	}
-	return platformKey
-}
-
-func getUsername(platformKey *model.PlatformKey, x string) (string, bool) {
-	body, _ := jdbAesDecrypt(platformKey.KeyJson, x)
+func getUsername(platformKey *model.PlatformKey, param interface{}) (string, bool) {
+	body, _ := jdbAesDecrypt(platformKey.KeyJson, param.(string))
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(body), &m)
 	if err != nil {
@@ -131,27 +95,6 @@ func getUsername(platformKey *model.PlatformKey, x string) (string, bool) {
 	}
 	uid := m["uid"].(string)
 	return uid, false
-}
-
-func getPlatformTenant(uid string, c *app.RequestContext) *model.PlatformTenant {
-	var tenant *model.PlatformTenant
-	for prefix, v := range JdbTenantMap {
-		if strings.HasPrefix(uid, prefix) {
-			tenant = v
-		}
-	}
-	if tenant == nil {
-		tenantList := service.GetPlatformTenantService().List(c)
-		for _, item := range tenantList {
-			JdbTenantMap[item.Prefix] = item
-		}
-	}
-	for prefix, v := range JdbTenantMap {
-		if strings.HasPrefix(uid, prefix) {
-			tenant = v
-		}
-	}
-	return tenant
 }
 
 func jdbAesDecrypt(keyJson string, encryptedText string) (string, error) {
@@ -184,29 +127,15 @@ func jdbAesDecrypt(keyJson string, encryptedText string) (string, error) {
 }
 
 func proxy() {
-	proxyOneCurrency(USD)
+	proxyOneCurrency(constant.USD, apiRequest)
 }
 
-func proxyOneCurrency(currency string) {
-	http.HandleFunc("/jdb/"+currency+"/apiRequest.do", func(w http.ResponseWriter, r *http.Request) {
-		platformKey := getPlatformKey(nil, currency)
-		var jdbRequestUrl bo.JdbRequestUrl
-		_ = json.Unmarshal([]byte(platformKey.UrlJson), &jdbRequestUrl)
-		apiRequest := jdbRequestUrl.ApiRequest
-		reverseProxy := JdbProxyMap[apiRequest]
-		if reverseProxy != nil {
-			reverseProxy.ServeHTTP(w, r)
-			return
-		}
-		for i := 0; i < 10; i++ {
-			lock := JdbMutex.TryLock()
-			if lock {
-				defer JdbMutex.Unlock()
-				reverseProxy = common.NewProxy(apiRequest)
-				JdbProxyMap[apiRequest] = reverseProxy
-				reverseProxy.ServeHTTP(w, r)
-			}
-			time.Sleep(time.Millisecond * 100)
-		}
+func proxyOneCurrency(currency string, path string) {
+	http.HandleFunc(constant.InnerURLPrefix+"/jdb/"+currency+"/"+path, func(w http.ResponseWriter, r *http.Request) {
+		platformKey := service.GetPlatformKeyService().GetPlatformKey(nil, currency, constant.JDB)
+		var urlMap = make(map[string]string)
+		_ = json.Unmarshal([]byte(platformKey.UrlJson), &urlMap)
+		url := urlMap[path]
+		common.ProxyUrl(w, r, url)
 	})
 }

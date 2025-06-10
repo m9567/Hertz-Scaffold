@@ -13,6 +13,10 @@ func InitRouter(middlewares ...app.HandlerFunc) *server.Hertz {
 	engine := server.New(server.WithHostPorts("[::]:" + strconv.Itoa(conf.AppConf.GetBaseInfo().ServicePort)))
 	engine.Use(middlewares...) // 通用中间件
 
+	callbackRouter := engine.Engine
+	callbackRouter.Use()
+	innerRouter := engine.Engine
+	innerRouter.Use()
 	defaultRouter := engine.Engine
 	defaultRouter.Use()
 	adminRouter := engine.Engine
@@ -22,6 +26,10 @@ func InitRouter(middlewares ...app.HandlerFunc) *server.Hertz {
 
 	for _, v := range common.GlobalApiList {
 		switch v.Model {
+		case constant.CallbackAPIModule:
+			common.EngineRegister(callbackRouter, v)
+		case constant.InnerApIModel:
+			common.EngineRegister(innerRouter, v)
 		case constant.DefaultAPIModule:
 			common.EngineRegister(defaultRouter, v)
 		case constant.DevOpsAPIModule:

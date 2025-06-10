@@ -10,7 +10,7 @@ type DemoRuleService interface {
 }
 
 type DemoRuleServiceProxy struct {
-	common *CommonService
+	//common *CommonService
 }
 
 var (
@@ -18,14 +18,14 @@ var (
 	demoRuleServiceOnce sync.Once
 )
 
-func GetDemoService() DemoRuleService {
-	demoRuleServiceOnce.Do(func() {
-		demoRuleService = &DemoRuleServiceProxy{
-			common: &CommonService{},
-		}
-	})
-	return demoRuleService
-}
+//func GetDemoService() DemoRuleService {
+//	demoRuleServiceOnce.Do(func() {
+//		demoRuleService = &DemoRuleServiceProxy{
+//			common: &CommonService{},
+//		}
+//	})
+//	return demoRuleService
+//}
 
 func (d DemoRuleServiceProxy) GetString(c *app.RequestContext, str string) (string, error) {
 	return str, nil

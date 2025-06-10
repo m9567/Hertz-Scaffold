@@ -1,5 +1,10 @@
 package constant
 
 var (
-	JDB = "JDB"
+	USD = "usd"
+)
+
+var (
+	JDB = "jdb"
+	PG  = "pg"
 )

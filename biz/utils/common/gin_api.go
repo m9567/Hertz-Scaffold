@@ -26,6 +26,10 @@ func Register(module, httpType, path string, handler app.HandlerFunc) {
 	}
 
 	switch module {
+	case constant.CallbackAPIModule:
+		api.Path = fmt.Sprintf("%s/%s", constant.CallbackURLPrefix, path)
+	case constant.InnerApIModel:
+		api.Path = fmt.Sprintf("%s/%s", constant.InnerURLPrefix, path)
 	case constant.DefaultAPIModule:
 		api.Path = fmt.Sprintf("%s/%s", constant.DefaultURLPrefix, path)
 	case constant.DevOpsAPIModule:

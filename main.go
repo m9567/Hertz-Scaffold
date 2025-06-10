@@ -9,6 +9,7 @@ import (
 	"Hertz-Scaffold/conf"
 	"database/sql"
 	"fmt"
+	"github.com/duke-git/lancet/v2/concurrency"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,6 +20,9 @@ func main() {
 	// 全局参数需要加载到内存中的
 	var globalModules []env.Module
 	globalModules = append(globalModules, env.UserMapJwtToken)
+	//locker
+	common.Locker = concurrency.NewTryKeyedLocker[string]()
+
 	env.InitModules(globalModules)
 	logger := fmt.Sprintf("######## init model cost %v ms", time.Since(start).Milliseconds())
 	fmt.Println(logger)

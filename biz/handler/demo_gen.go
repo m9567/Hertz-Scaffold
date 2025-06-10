@@ -3,11 +3,9 @@ package handler
 import (
 	"Hertz-Scaffold/biz/bo"
 	"Hertz-Scaffold/biz/constant"
-	"Hertz-Scaffold/biz/service"
 	"Hertz-Scaffold/biz/utils/common"
 	"context"
 	"github.com/cloudwego/hertz/pkg/app"
-	"strconv"
 	"time"
 )
 
@@ -53,13 +51,13 @@ func GetQuery(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	res, err := service.GetDemoService().GetString(c, strconv.Itoa(request.Id))
-	if err != nil {
-		logger.Error("[GetQuery] GetString err %v", err)
-		common.ResponseError(c, constant.ErrNoPermission, err)
-		return
-	}
-	common.ResponseSuccess(c, res)
+	//res, err := service.GetDemoService().GetString(c, strconv.Itoa(request.Id))
+	//if err != nil {
+	//	logger.Error("[GetQuery] GetString err %v", err)
+	//	common.ResponseError(c, constant.ErrNoPermission, err)
+	//	return
+	//}
+	//common.ResponseSuccess(c, res)
 }
 
 // PostJsonBinding 使用Post进行绑定

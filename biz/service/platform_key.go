@@ -10,6 +10,7 @@ import (
 
 type PlatformKeyService interface {
 	FindOneOrDefault(c *app.RequestContext, currency string, code string) *model.PlatformKey
+	GetPlatformKey(c *app.RequestContext, currency string, code string) *model.PlatformKey
 }
 
 type PlatformKeyServiceProxy struct {
@@ -19,6 +20,7 @@ type PlatformKeyServiceProxy struct {
 var (
 	platformKeyService     PlatformKeyService
 	platformKeyServiceOnce sync.Once
+	platformRequestMap     = make(map[string]*model.PlatformKey)
 )
 
 func GetPlatformKeyService() PlatformKeyService {
@@ -28,6 +30,16 @@ func GetPlatformKeyService() PlatformKeyService {
 		}
 	})
 	return platformKeyService
+}
+
+func (s *PlatformKeyServiceProxy) GetPlatformKey(c *app.RequestContext, currency string, platformCode string) *model.PlatformKey {
+	key := platformCode + ":" + currency
+	platformKey := platformRequestMap[key]
+	if platformKey == nil {
+		platformKey = GetPlatformKeyService().FindOneOrDefault(c, currency, platformCode)
+		platformRequestMap[key] = platformKey
+	}
+	return platformKey
 }
 
 func (s *PlatformKeyServiceProxy) FindOneOrDefault(c *app.RequestContext, currency string, code string) *model.PlatformKey {

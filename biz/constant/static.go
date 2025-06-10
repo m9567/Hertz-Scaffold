@@ -9,13 +9,17 @@ const (
 )
 
 const (
-	DefaultAPIModule = "defaultAPI"
-	DevOpsAPIModule  = "devOpsAPI"
-	AdminApIModel    = "adminAPI"
+	CallbackAPIModule = "callbackAPI"
+	DefaultAPIModule  = "defaultAPI"
+	DevOpsAPIModule   = "devOpsAPI"
+	AdminApIModel     = "adminAPI"
+	InnerApIModel     = "innerAPI"
 
-	DefaultURLPrefix = "/api"
-	DevOpsURLPrefix  = "/api-dev"
-	AdminURLPrefix   = "/api-admin"
+	CallbackURLPrefix = "/callback"
+	DefaultURLPrefix  = "/app-api"
+	DevOpsURLPrefix   = "/devops-api"
+	AdminURLPrefix    = "/admin-api"
+	InnerURLPrefix    = "/inner-api"
 )
 
 const (
