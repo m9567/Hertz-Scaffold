@@ -14,8 +14,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
-	"log"
-	"net/http"
 	"strings"
 )
 
@@ -28,7 +26,9 @@ func init() {
 	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/game/call/jdb/action", JdbAction)
 	//todo /callback/usd/game/call/jdb/action
 	common.Register(constant.CallbackAPIModule, constant.MethodPost, "/game/:currency/call/jdb/action", JdbAction)
-	jdbProxy()
+
+	common.Register(constant.InnerApIModel, constant.MethodPost, "/game/:currency/jdb/:path", JdbRequest)
+
 }
 
 func JdbAction(ctx context.Context, c *app.RequestContext) {
@@ -127,18 +127,17 @@ func jdbAesDecrypt(keyJson string, encryptedText string) (string, error) {
 	return string(plainText), nil
 }
 
-func jdbProxy() {
-	jdbProxyOneCurrency(constant.USD, jdbApiRequest)
-}
-
-func jdbProxyOneCurrency(currency string, path string) {
-	pattern := constant.InnerURLPrefix + "/jdb/" + currency + "/" + path
-	log.Println(pattern)
-	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		platformKey := service.GetPlatformKeyService().GetPlatformKey(nil, currency, constant.JDB)
-		var urlMap = make(map[string]string)
-		_ = json.Unmarshal([]byte(platformKey.UrlJson), &urlMap)
-		//url := urlMap[path]
-		//common.ProxyUrl(w, r, url)
+func JdbRequest(ctx context.Context, c *app.RequestContext) {
+	currency := c.Param("currency")
+	path := c.Param("path")
+	var params = make(map[string]string)
+	c.PostArgs().VisitAll(func(k, v []byte) {
+		params[string(k)] = string(v)
 	})
+	platformKey := service.GetPlatformKeyService().GetPlatformKey(c, currency, constant.JDB)
+	var urlMap = make(map[string]string)
+	json.Unmarshal([]byte(platformKey.UrlJson), &urlMap)
+	statusCode, tempMap := common.ForwardFormUrl("", urlMap[path], params)
+	c.JSON(statusCode, tempMap)
+
 }

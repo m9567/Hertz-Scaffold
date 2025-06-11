@@ -6,12 +6,9 @@ import (
 	"Hertz-Scaffold/biz/repository"
 	"Hertz-Scaffold/biz/utils/common"
 	"Hertz-Scaffold/biz/utils/env"
-	"Hertz-Scaffold/conf"
 	"database/sql"
 	"fmt"
 	"github.com/duke-git/lancet/v2/concurrency"
-	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -33,12 +30,7 @@ func main() {
 		middleware.RequestDoTracerId(),     // 全局链路中间件
 		middleware.RecoveryMiddleware(),    // 最后捕获panic错误
 	)
-	go func() {
-		err := http.ListenAndServe(":"+strconv.Itoa(conf.AppConf.GetBaseInfo().ServicePort+1), nil)
-		if err != nil {
 
-		}
-	}()
 	//go cron_job.InitCronJob() // 如果需要定时任务 则开启定时任务
 	engine.Spin() // 开启Http服务
 

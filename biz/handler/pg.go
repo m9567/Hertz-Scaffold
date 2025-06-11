@@ -45,7 +45,6 @@ func pgGetUsername(_ *model.PlatformKey, params map[string]string) (string, bool
 }
 
 func pgCallbackCommon(ctx context.Context, c *app.RequestContext) {
-	logger := common.GetCtxLogger(c)
 	currency := c.Param("currency")
 	var params = make(map[string]string)
 	c.PostArgs().VisitAll(func(k, v []byte) {
@@ -53,7 +52,6 @@ func pgCallbackCommon(ctx context.Context, c *app.RequestContext) {
 	})
 
 	platformKey := service.GetPlatformKeyService().GetPlatformKey(c, currency, constant.PG)
-	logger.Info(platformKey.KeyJson)
 
 	username, done := pgGetUsername(platformKey, params)
 	if done {
