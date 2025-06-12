@@ -23,16 +23,18 @@ MysqlProduct:
   MaxConnLiftTime: 100
 
 RedisDevelop:
-  ProxyList: ["127.0.0.1:6379"]
+  Addr: "127.0.0.1:6379"
   MaxActive: 100
-  MaxIdle: 100
-  DownGrade: false
+  PoolSize: 50
+  MaxRetries: 10
+  Db: 0
 
 RedisProduct:
-  ProxyList: ["127.0.0.1:6379"]
+  Addr: "127.0.0.1:6379"
   MaxActive: 100
-  MaxIdle: 100
-  DownGrade: false
+  PoolSize: 50
+  MaxRetries: 10
+  Db: 0
 
 GameConfigDevelop:
   DefaultCurrency: usd

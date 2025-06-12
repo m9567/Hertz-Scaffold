@@ -7,6 +7,7 @@ import (
 	"Hertz-Scaffold/conf"
 	"database/sql"
 	"fmt"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"io"
 	"sync"
@@ -18,6 +19,7 @@ type Module string
 const (
 	Conf            Module = "Conf"
 	Mysql           Module = "Mysql"
+	Redis           Module = "Redis"
 	Logger          Module = "Logger"
 	Validate        Module = "Validate"
 	UserMapJwtToken Module = "UserMapJwtToken"
@@ -29,6 +31,7 @@ func getBaseModel() []Module {
 	return []Module{
 		Conf,
 		Mysql,
+		Redis,
 		Logger,
 		Validate,
 	}
@@ -57,6 +60,8 @@ func InitModule(module Module) {
 	case Conf:
 		initLoadConf()
 	case Mysql:
+		initMysqlDb()
+	case Redis:
 		initMysqlDb()
 	case Logger:
 		initGlobalLogger()
@@ -108,6 +113,20 @@ func initMysqlDb() {
 	sqlDB.SetMaxOpenConns(conf.AppConf.GetMysqlInfo().MaxOpenConn)                       // 设置打开数据库连接的最大数量
 	sqlDB.SetConnMaxLifetime(time.Duration(conf.AppConf.GetMysqlInfo().MaxConnLifeTime)) //设置了连接可复用的最大时间
 	repository.SqlDbPool = sqlDB
+	fmt.Println("########  init mysql over")
+}
+
+func initRedis() {
+	redisInfo := conf.AppConf.GetRedisInfo()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:           redisInfo.Addr,
+		DB:             redisInfo.Db,
+		PoolSize:       redisInfo.PoolSize,
+		MaxActiveConns: redisInfo.MaxActive,
+		MaxRetries:     redisInfo.MaxRetries,
+	})
+	repository.RedisClient = rdb
+	defer rdb.Close()
 	fmt.Println("########  init mysql over")
 }
 

@@ -55,10 +55,11 @@ type MysqlBase struct {
 }
 
 type RedisBase struct {
-	ProxyList []string
-	MaxActive int
-	MaxIdle   int
-	DownGrade bool
+	Addr       string
+	MaxActive  int
+	PoolSize   int
+	MaxRetries int
+	Db         int
 }
 
 const (
